@@ -4,7 +4,7 @@ require "test/unit"
 class RDBTest < Test::Unit::TestCase
   def clean
     rpath = "./data"
-    FileUtils.rm_rf(rpath)
+    FileUtils.rm_rf(rpath, secure: true)
   end
 
   def test_create
@@ -15,7 +15,6 @@ class RDBTest < Test::Unit::TestCase
     assert_equal(Dir.exist?("#{rpath}/tables/#{table_name}/"), true)
     assert_equal(File.exist?("#{rpath}/tables/#{table_name}/data"), true)
     assert_equal(File.exist?("#{rpath}/tables/#{table_name}/header"), true)
-    clean
   end
 
   def test_select
@@ -31,7 +30,15 @@ class RDBTest < Test::Unit::TestCase
     )
   end
   def test_insert
-    RDB::sql()
+    clean
+    table_name = "test_tbl"
+    RDB::sql("create table #{table_name}(id integer, col1 integer, col2 text);")
+    RDB::sql("insert into #{table_name}(id, col1, col2) values(1, 10, 'test')")
+    rpath = "./data"
+    assert_equal(
+      File.read("#{rpath}/tables/#{table_name}/data"),
+      "1,10,'test'\n"
+    )
   end
 
 end
