@@ -1,5 +1,10 @@
 GEM
   specs:
+    google-protobuf (3.25.2)
+    google-protobuf (3.25.2-aarch64-linux)
+    google-protobuf (3.25.2-arm64-darwin)
+    google-protobuf (3.25.2-x86-linux)
+    google-protobuf (3.25.2-x86_64-darwin)
     google-protobuf (3.25.2-x86_64-linux)
     pg_query (5.1.0)
       google-protobuf (>= 3.22.3)
@@ -8,6 +13,11 @@ GEM
       power_assert
 
 PLATFORMS
+  aarch64-linux
+  arm64-darwin
+  ruby
+  x86-linux
+  x86_64-darwin
   x86_64-linux
 
 DEPENDENCIES
@@ -15,4 +25,4 @@ DEPENDENCIES
   test-unit
 
 BUNDLED WITH
-   2.3.7
+   2.5.4
