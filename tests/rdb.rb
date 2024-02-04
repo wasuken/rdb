@@ -33,7 +33,7 @@ class RDBTest < Test::Unit::TestCase
     clean
     table_name = "test_tbl"
     RDB::sql("create table #{table_name}(id integer, col1 integer, col2 text);")
-    RDB::sql("insert into #{table_name}(id, col1, col2) values(1, 10, 'test')")
+    RDB::sql("insert into #{table_name}(id, col1, col2) values(1, 10, 'test');")
     rpath = "./data"
     assert_equal(
       File.read("#{rpath}/tables/#{table_name}/data"),
