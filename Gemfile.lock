@@ -1,4 +1,5 @@
 GEM
+  remote: https://rubygems.org/
   specs:
     google-protobuf (3.25.2)
     google-protobuf (3.25.2-aarch64-linux)
