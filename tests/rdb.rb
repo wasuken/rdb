@@ -26,14 +26,19 @@ class RDBTest < Test::Unit::TestCase
 
   def test_select
     clean
+    table_name = "test_tbl"
+    RDB::sql("create table #{table_name}(id integer, col1 integer, col2 text, col3 integer);")
+    RDB::sql("insert into #{table_name}(id, col1, col2, col3) values(1, 10, 'test', 10000);")
     assert_equal(
       [
         {
-          "id" => 1,
-          "col1" => 10,
-          "col2" => "test",
+          "id" => "1",
+          "col1" => "10",
+          "col2" => "'test'",
+          "col3" => "10000"
         },
-      ], RDB::sql("select * from test_tbl")
+      ],
+      RDB::sql("select * from #{table_name};")
     )
   end
   def test_insert

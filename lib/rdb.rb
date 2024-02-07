@@ -37,13 +37,15 @@ class RDB
     end
   end
   def self.select(stmts)
-    [
-      {
-        "id" => 1,
-        "col1" => 10,
-        "col2" => "test",
-      },
-    ]
+    table_name = stmts[0].stmt.select_stmt.from_clause[0].range_var.relname
+    table_data_path = "#{DATA_PATH}/tables/#{table_name}/data"
+    table_header_path = "#{DATA_PATH}/tables/#{table_name}/header"
+    headers = File.read(table_header_path).chomp.split(',').map{|x| x.split(':')[0]}
+    rows = []
+    CSV.foreach(table_data_path, headers: headers) do |row|
+      rows << row.to_h
+    end
+    rows
   end
   def self.create(stmts)
     table_name = stmts[0].stmt.create_stmt.relation.relname
@@ -74,7 +76,6 @@ class RDB
     table_name = stmts[0].stmt.update_stmt.relation.relname
     table_data_path = "#{DATA_PATH}/tables/#{table_name}/data"
     table_header_path = "#{DATA_PATH}/tables/#{table_name}/header"
-    pp table_data_path
     target_list = stmts[0].stmt.update_stmt.target_list
     update_map = {}
     target_list.each do |target|
@@ -83,7 +84,6 @@ class RDB
     end
 
     tempfile = Tempfile.new("#{table_data_path}.temp")
-
     headers = File.read(table_header_path).chomp.split(',').map{|x| x.split(':')[0]}
     CSV.open(tempfile.path, "w") do |csv|
       CSV.foreach(table_data_path, headers: headers) do |row|
@@ -119,8 +119,6 @@ def analize(sql)
 end
 
 # puts "# 1"
-# sql = "create table test_tbl(id integer, col1 integer, col2 text);"
+# sql = "select * from test;"
 # stmts = PgQuery.parse(sql).tree.stmts
-# stmts[0].stmt.create_stmt.table_elts.each do |v|
-#   pp v
-# end
+# pp stmts[0].stmt.select_stmt.from_clause[0].range_var.relname
