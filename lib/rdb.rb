@@ -1,6 +1,7 @@
 require "pg_query"
 require "fileutils"
 require "csv"
+require 'tempfile'
 
 class TableExistError < StandardError
   attr_reader :attr
@@ -14,6 +15,13 @@ end
 DATA_PATH = "./data"
 
 class RDB
+  def self.a_const_val(aconst)
+    if aconst.ival
+      aconst.ival.ival
+    elsif aconst.sval
+      "'#{aconst.sval.sval}'"
+    end
+  end
   def self.insert(stmts)
     table_name = stmts[0].stmt.insert_stmt.relation.relname
     vals_list = stmts[0].stmt.insert_stmt.select_stmt.select_stmt.values_lists
@@ -22,12 +30,7 @@ class RDB
       vals_list.each do |vals|
         line_ary = []
         vals.list.items.each_with_index do |v,i|
-          vcon = v.a_const
-          if vcon.ival
-            line_ary.push(vcon.ival.ival)
-          elsif vcon.sval
-            line_ary.push("'#{vcon.sval.sval}'")
-          end
+          line_ary.push(self.a_const_val(v.a_const))
         end
         csv << line_ary
       end
@@ -53,18 +56,45 @@ class RDB
 
     FileUtils.mkdir_p(table_path)
 
+    header = []
     elts.each do |el|
       col_name = el.column_def.colname
       type_name = el.column_def.type_name.names.filter { |x| x.string.sval != "pg_catalog" }[0].string.sval
-      line = "#{col_name}:#{type_name}\n"
-      File.write("#{table_path}/header", line)
+      header << "#{col_name}:#{type_name}"
     end
+    File.write("#{table_path}/header", header.join(',') + "\n")
     File.write("#{table_path}/data", "")
   end
   def self.delete(stmts)
     table_name = stmts[0].stmt.delete_stmt.relation.relname
     table_data_path = "#{DATA_PATH}/tables/#{table_name}/data"
     File.write(table_data_path, "")
+  end
+  def self.update(stmts)
+    table_name = stmts[0].stmt.update_stmt.relation.relname
+    table_data_path = "#{DATA_PATH}/tables/#{table_name}/data"
+    table_header_path = "#{DATA_PATH}/tables/#{table_name}/header"
+    pp table_data_path
+    target_list = stmts[0].stmt.update_stmt.target_list
+    update_map = {}
+    target_list.each do |target|
+      colname = target.res_target.name
+      update_map[colname] = self.a_const_val(target.res_target.val.a_const)
+    end
+
+    tempfile = Tempfile.new("#{table_data_path}.temp")
+
+    headers = File.read(table_header_path).chomp.split(',').map{|x| x.split(':')[0]}
+    CSV.open(tempfile.path, "w") do |csv|
+      CSV.foreach(table_data_path, headers: headers) do |row|
+        update_map.each do |k,v|
+          row[k] = v
+        end
+        csv << row
+      end
+    end
+    tempfile.close
+    FileUtils.mv(tempfile.path, table_data_path)
   end
   def self.sql(sql)
     stmts = PgQuery.parse(sql).tree.stmts
@@ -76,6 +106,8 @@ class RDB
       self.insert(stmts)
     elsif stmts[0].stmt.delete_stmt
       self.delete(stmts)
+    elsif stmts[0].stmt.update_stmt
+      self.update(stmts)
     end
   end
 end
@@ -87,6 +119,8 @@ def analize(sql)
 end
 
 # puts "# 1"
-# sql = "insert into test_tbl(id, col1, col2) values(1, 10, 'test');"
+# sql = "create table test_tbl(id integer, col1 integer, col2 text);"
 # stmts = PgQuery.parse(sql).tree.stmts
-# pp stmts[0].stmt.insert_stmt.select_stmt.select_stmt.values_lists
+# stmts[0].stmt.create_stmt.table_elts.each do |v|
+#   pp v
+# end
