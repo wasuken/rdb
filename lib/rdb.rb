@@ -30,7 +30,6 @@ class RDB
           end
         end
         csv << line_ary
-        pp line_ary
       end
     end
   end
@@ -62,6 +61,11 @@ class RDB
     end
     File.write("#{table_path}/data", "")
   end
+  def self.delete(stmts)
+    table_name = stmts[0].stmt.delete_stmt.relation.relname
+    table_data_path = "#{DATA_PATH}/tables/#{table_name}/data"
+    File.write(table_data_path, "")
+  end
   def self.sql(sql)
     stmts = PgQuery.parse(sql).tree.stmts
     if stmts[0].stmt.select_stmt
@@ -70,6 +74,8 @@ class RDB
       self.create(stmts)
     elsif stmts[0].stmt.insert_stmt
       self.insert(stmts)
+    elsif stmts[0].stmt.delete_stmt
+      self.delete(stmts)
     end
   end
 end

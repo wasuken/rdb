@@ -40,5 +40,16 @@ class RDBTest < Test::Unit::TestCase
       "1,10,'test'\n"
     )
   end
+  def test_delete
+    clean
+    table_name = "test_tbl"
+    RDB::sql("create table #{table_name}(id integer, col1 integer, col2 text);")
+    RDB::sql("delete from #{table_name};")
+    rpath = "./data"
+    assert_equal(
+      File.read("#{rpath}/tables/#{table_name}/data"),
+      ""
+    )
+  end
 
 end
