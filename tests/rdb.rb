@@ -1,5 +1,5 @@
-require "./lib/rdb"
 require "test/unit"
+require_relative "../lib/rdb"
 
 class RDBTest < Test::Unit::TestCase
   def clean
